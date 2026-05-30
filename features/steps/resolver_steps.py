@@ -430,10 +430,25 @@ def given_custom_provider(context, name: str):
 	_workspace(context).providers.register(provider)
 
 
+@given('a custom source type "{source_type}" is registered')
+def given_custom_source_type(context, source_type: str):
+	_workspace(context).providers.register_type(source_type, StaticSourceProvider)
+
+
+@given('configured source "{name}" uses type "{source_type}" at "{location}"')
+def given_configured_source(context, name: str, source_type: str, location: str):
+	_workspace(context).providers.add_source(name, source_type, location)
+
+
 @given('provider "{name}" can resolve target "{target}"')
 def provider_can_resolve(context, name: str, target: str):
 	provider = _workspace(context).providers.providers[name]
 	provider.add(target, package_id=target.split(":", 1)[-1])
+
+
+@given('source "{name}" can resolve target "{target}"')
+def source_can_resolve(context, name: str, target: str):
+	provider_can_resolve(context, name, target)
 
 
 @when('I resolve target "{target}"')
@@ -449,6 +464,11 @@ def assert_delegated_provider(context, name: str):
 @then('the resolved package should record provider "{name}"')
 def assert_resolved_provider(context, name: str):
 	assert _workspace(context).resolved_package.provider == name
+
+
+@then('source "{name}" should remember location "{location}"')
+def assert_source_location(context, name: str, location: str):
+	assert _workspace(context).providers.providers[name].location == location
 
 
 @given('a resolved package "{package_id}" with a manifest missing field "{field}"')

@@ -9,6 +9,14 @@ Feature: Validation and provider extensibility
     Then the resolver should delegate to provider "internal"
     And the resolved package should record provider "internal"
 
+  Scenario: A custom source type creates configured source instances
+    Given a custom source type "internal-index" is registered
+    And configured source "internal" uses type "internal-index" at "memory://internal"
+    And source "internal" can resolve target "internal:zush.cron"
+    When I resolve target "internal:zush.cron"
+    Then the resolver should delegate to provider "internal"
+    And source "internal" should remember location "memory://internal"
+
   Scenario: Validation policies reject an invalid package manifest
     Given a resolved package "zush.cron" with a manifest missing field "entrypoint"
     And a validation policy requires field "entrypoint"

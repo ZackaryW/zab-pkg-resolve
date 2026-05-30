@@ -9,6 +9,8 @@ from zab_pkg_resolve.resolver import (
     ManagedStore,
     PythonVersionPolicy,
     RequiredFieldPolicy,
+    ResolverRegistry,
+    StaticSourceProvider,
     cache_key,
     normalize_target,
     run_validation,
@@ -92,6 +94,20 @@ class ValidationPolicyTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.code, "python-version-unsupported")
+
+
+class SourceRegistryTests(unittest.TestCase):
+    def test_registered_source_type_creates_configured_source_instance(self) -> None:
+        registry = ResolverRegistry()
+        registry.register_type("internal-index", StaticSourceProvider)
+
+        source = registry.add_source("internal", "internal-index", "memory://internal")
+        source.add("internal:zush.cron")
+        package = registry.resolve("internal:zush.cron")
+
+        self.assertEqual(registry.last_provider, "internal")
+        self.assertEqual(source.location, "memory://internal")
+        self.assertEqual(package.provider, "internal")
 
 
 if __name__ == "__main__":

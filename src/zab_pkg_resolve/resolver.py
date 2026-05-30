@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from zab_pkg_resolve.indexes import IndexManager
+from zab_pkg_resolve.interfaces.sources import SourceConfig, SourceFactory
 from zab_pkg_resolve.locks import write_lock_records
 from zab_pkg_resolve.providers import ResolverRegistry, SourceProvider, StaticSourceProvider
 from zab_pkg_resolve.scenario import ScenarioWorkspace
@@ -16,6 +17,8 @@ __all__ = [
     "RequiredFieldPolicy",
     "ResolverRegistry",
     "ScenarioWorkspace",
+    "SourceConfig",
+    "SourceFactory",
     "SourceProvider",
     "StaticSourceProvider",
     "cache_key",

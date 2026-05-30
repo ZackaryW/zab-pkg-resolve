@@ -6,7 +6,7 @@ from zab_pkg_resolve.models import (
     PackageCandidate,
     ResolvedPackage,
 )
-from zab_pkg_resolve.resolver import ManagedStore, ResolverRegistry, cache_key, normalize_target
+from zab_pkg_resolve.resolver import ManagedStore, ResolverRegistry, SourceConfig, SourceProvider, cache_key, normalize_target
 
 
 def main() -> None:
@@ -22,6 +22,8 @@ __all__ = [
     "PackageCandidate",
     "ResolvedPackage",
     "ResolverRegistry",
+    "SourceConfig",
+    "SourceProvider",
     "cache_key",
     "main",
     "normalize_target",
