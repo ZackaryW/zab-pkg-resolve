@@ -1,0 +1,22 @@
+[project]
+name = "zab-pkg-resolve"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ZackaryW", email = "36378555+ZackaryW@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "behave>=1.2.6",
+]
+
+[project.scripts]
+zab-pkg-resolve = "zab_pkg_resolve:main"
+
+[build-system]
+requires = ["uv_build>=0.11.16,<0.12.0"]
+build-backend = "uv_build"
