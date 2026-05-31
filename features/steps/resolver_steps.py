@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from behave import given, then, when
 
-from zab_pkg_resolve.models import CanonicalTarget, ResolvedPackage
+from zab_pkg_resolve.models import CanonicalTarget, Loadpoint, ResolvedPackage
 from zab_pkg_resolve.resolver import (
 	PythonVersionPolicy,
 	RequiredFieldPolicy,
@@ -221,6 +221,16 @@ def set_installed_entrypoint(context, package_id: str, entrypoint: str):
 	_record(context, package_id).entrypoint = entrypoint
 
 
+@given('package "{package_id}" exposes module loadpoint "{ref}" callable "{callable_name}"')
+def set_installed_module_loadpoint(context, package_id: str, ref: str, callable_name: str):
+	_record(context, package_id).loadpoint = Loadpoint.module(ref, callable=callable_name)
+
+
+@given('package "{package_id}" exposes path loadpoint "{ref}" callable "{callable_name}"')
+def set_installed_path_loadpoint(context, package_id: str, ref: str, callable_name: str):
+	_record(context, package_id).loadpoint = Loadpoint.path(ref, callable=callable_name)
+
+
 @given('package "{package_id}" declares capability "{capability}"')
 def set_installed_capability(context, package_id: str, capability: str):
 	_record(context, package_id).capabilities.append(capability)
@@ -250,6 +260,21 @@ def assert_consumer_record_path(context, package_id: str):
 @then('the consumer record for "{package_id}" should include entrypoint "{entrypoint}"')
 def assert_consumer_record_entrypoint(context, package_id: str, entrypoint: str):
 	assert _consumer_record(context, package_id).entrypoint == entrypoint
+
+
+@then('the consumer record for "{package_id}" should include loadpoint kind "{kind}"')
+def assert_consumer_record_loadpoint_kind(context, package_id: str, kind: str):
+	assert _consumer_record(context, package_id).loadpoint.kind == kind
+
+
+@then('the consumer record for "{package_id}" should include loadpoint ref "{ref}"')
+def assert_consumer_record_loadpoint_ref(context, package_id: str, ref: str):
+	assert _consumer_record(context, package_id).loadpoint.ref == ref
+
+
+@then('the consumer record for "{package_id}" should include loadpoint callable "{callable_name}"')
+def assert_consumer_record_loadpoint_callable(context, package_id: str, callable_name: str):
+	assert _consumer_record(context, package_id).loadpoint.callable == callable_name
 
 
 @then('the consumer record for "{package_id}" should include capability "{capability}"')

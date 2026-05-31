@@ -30,6 +30,24 @@ class PackageCandidate:
     target: CanonicalTarget
 
 
+@dataclass(frozen=True)
+class Loadpoint:
+    kind: str
+    ref: str
+    callable: str = "extension"
+
+    @classmethod
+    def module(cls, ref: str, *, callable: str = "extension") -> Loadpoint:
+        return cls(kind="module", ref=ref, callable=callable)
+
+    @classmethod
+    def path(cls, ref: str, *, callable: str = "extension") -> Loadpoint:
+        return cls(kind="path", ref=ref, callable=callable)
+
+    def as_dict(self) -> dict[str, str]:
+        return {"kind": self.kind, "ref": self.ref, "callable": self.callable}
+
+
 @dataclass
 class ResolvedPackage:
     id: str
@@ -39,6 +57,7 @@ class ResolvedPackage:
     revision: str = ""
     artifact_hash: str = ""
     entrypoint: str | None = None
+    loadpoint: Loadpoint | None = None
     capabilities: list[str] = field(default_factory=list)
     manifest: dict[str, Any] = field(default_factory=dict)
     requires_python: str | None = None
@@ -50,6 +69,7 @@ class InstalledPackageRecord:
     install_path: Path
     artifact_hash: str
     entrypoint: str | None = None
+    loadpoint: Loadpoint | None = None
     capabilities: list[str] = field(default_factory=list)
     active: bool = True
     disabled: bool = False
@@ -62,6 +82,7 @@ class ConsumerPackageRecord:
     id: str
     installed_path: Path
     entrypoint: str | None
+    loadpoint: Loadpoint | None
     capabilities: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
@@ -69,6 +90,7 @@ class ConsumerPackageRecord:
             "id": self.id,
             "installed_path": str(self.installed_path),
             "entrypoint": self.entrypoint,
+            "loadpoint": self.loadpoint.as_dict() if self.loadpoint is not None else None,
             "capabilities": list(self.capabilities),
         }
 

@@ -85,6 +85,7 @@ class ManagedStore:
             install_path=install_path,
             artifact_hash=package.artifact_hash,
             entrypoint=package.entrypoint,
+            loadpoint=package.loadpoint,
             capabilities=list(package.capabilities),
             active=True,
             source_metadata={
@@ -100,6 +101,7 @@ class ManagedStore:
             id=record.id,
             installed_path=record.install_path,
             entrypoint=record.entrypoint,
+            loadpoint=record.loadpoint,
             capabilities=tuple(record.capabilities),
         )
 

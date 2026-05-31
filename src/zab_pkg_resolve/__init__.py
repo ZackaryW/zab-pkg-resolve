@@ -3,6 +3,7 @@ from zab_pkg_resolve.models import (
     ConsumerPackageRecord,
     IndexSource,
     InstalledPackageRecord,
+    Loadpoint,
     PackageCandidate,
     ResolvedPackage,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "ConsumerPackageRecord",
     "IndexSource",
     "InstalledPackageRecord",
+    "Loadpoint",
     "ManagedStore",
     "PackageCandidate",
     "ResolvedPackage",

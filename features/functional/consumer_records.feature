@@ -14,6 +14,22 @@ Feature: Consumer-facing installed records
     And the consumer record for "zush.cron" should include capability "zush.extension"
     But the consumer record for "zush.cron" should not include registry authentication details
 
+  Scenario: Listing installed packages exposes the package loadpoint
+    Given package "zush.cron" is installed and active
+    And package "zush.cron" exposes module loadpoint "zush_cron.__zush__" callable "extension"
+    When a consumer lists active installed packages
+    Then the consumer record for "zush.cron" should include loadpoint kind "module"
+    And the consumer record for "zush.cron" should include loadpoint ref "zush_cron.__zush__"
+    And the consumer record for "zush.cron" should include loadpoint callable "extension"
+
+  Scenario: Listing installed packages exposes path loadpoints
+    Given package "zush.local" is installed and active
+    And package "zush.local" exposes path loadpoint "C:/repo/zush_local" callable "extension"
+    When a consumer lists active installed packages
+    Then the consumer record for "zush.local" should include loadpoint kind "path"
+    And the consumer record for "zush.local" should include loadpoint ref "C:/repo/zush_local"
+    And the consumer record for "zush.local" should include loadpoint callable "extension"
+
   Scenario: Disabled packages are omitted from active consumer records
     Given package "zush.cron" is installed and active
     And package "zush.github" is installed and disabled

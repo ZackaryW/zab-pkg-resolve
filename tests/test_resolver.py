@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from zab_pkg_resolve.models import CanonicalTarget, ResolvedPackage
+from zab_pkg_resolve.models import CanonicalTarget, Loadpoint, ResolvedPackage
 from zab_pkg_resolve.resolver import (
     ManagedStore,
     PythonVersionPolicy,
@@ -48,6 +48,39 @@ class ManagedStoreTests(unittest.TestCase):
             self.assertEqual(result.record.artifact_hash, "abc123")
             self.assertEqual(consumer_records[0].id, "zush.cron")
             self.assertEqual(consumer_records[0].capabilities, ("zush.extension",))
+
+    def test_install_projects_structured_loadpoint_to_consumers(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            store = ManagedStore(Path(temp_dir))
+            package = ResolvedPackage(
+                id="zush.cron",
+                target=CanonicalTarget("package", "zush.cron"),
+                artifact_hash="abc123",
+                loadpoint=Loadpoint.module("zush_cron.__zush__", callable="extension"),
+            )
+
+            store.install(package)
+            consumer_record = store.consumer_records()[0]
+
+            self.assertEqual(consumer_record.loadpoint, Loadpoint.module("zush_cron.__zush__", callable="extension"))
+            self.assertEqual(consumer_record.as_dict()["loadpoint"]["kind"], "module")
+            self.assertEqual(consumer_record.as_dict()["loadpoint"]["ref"], "zush_cron.__zush__")
+
+    def test_install_projects_path_loadpoint_to_consumers(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            store = ManagedStore(Path(temp_dir))
+            package = ResolvedPackage(
+                id="zush.local",
+                target=CanonicalTarget("path", "C:/repo/zush_local"),
+                artifact_hash="local123",
+                loadpoint=Loadpoint.path("C:/repo/zush_local", callable="extension"),
+            )
+
+            store.install(package)
+            consumer_record = store.consumer_records()[0]
+
+            self.assertEqual(consumer_record.loadpoint, Loadpoint.path("C:/repo/zush_local", callable="extension"))
+            self.assertEqual(consumer_record.as_dict()["loadpoint"]["kind"], "path")
 
     def test_uninstall_preserves_record_but_removes_active_projection(self) -> None:
         with TemporaryDirectory() as temp_dir:
