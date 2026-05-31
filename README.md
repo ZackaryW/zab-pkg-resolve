@@ -19,6 +19,7 @@ Python 3.12 or newer is required.
 - Managed cache and install records through `ManagedStore`.
 - Runtime-facing `ConsumerPackageRecord` projection without resolver credentials or registry internals.
 - Structured `Loadpoint` values for module and path based package surfaces.
+- Local Python environment discovery for already-installed packages whose distribution names match a regular expression.
 - `InstallResult.changed` so consumers can skip runtime reloads when an update did not change the active artifact or load surface.
 - Validation policies for manifest fields and Python version constraints.
 
@@ -69,6 +70,35 @@ Consumers receive loadpoints through `ConsumerPackageRecord.as_dict()`:
 	},
 	"capabilities": ["zush.extension"],
 }
+```
+
+## Local Environment Provider
+
+`LocalEnvironmentProvider` discovers packages that are already installed in the active Python environment. It is intended for runtimes that want to bypass remote indexes and mount local extension packages directly.
+
+```python
+from zab_pkg_resolve import LocalEnvironmentProvider
+
+provider = LocalEnvironmentProvider("local", location=r"^zush[-_].+")
+
+for package in provider.scan():
+	print(package.id, package.loadpoint)
+```
+
+The provider uses `importlib.metadata.distributions()` to inspect installed distributions, matches the distribution name against the configured regex, reads `top_level.txt` when available, and checks for an importable `<module>.__zush__` module. Matching packages are returned as `ResolvedPackage` values with module loadpoints:
+
+```python
+Loadpoint.module("zush_demo.__zush__", callable="extension")
+```
+
+It can also be registered with `ResolverRegistry` as the built-in `local-env` source type:
+
+```python
+from zab_pkg_resolve import ResolverRegistry
+
+registry = ResolverRegistry()
+registry.add_source("local", "local-env", r"^zush[-_].+")
+package = registry.resolve("local:zush-demo")
 ```
 
 ## Development

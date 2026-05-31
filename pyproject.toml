@@ -1,6 +1,6 @@
 [project]
 name = "zab-pkg-resolve"
-version = "0.1.0"
+version = "0.2.0"
 description = "Resolver and install-record boundary for install-centric Python package runtimes"
 readme = "README.md"
 authors = [

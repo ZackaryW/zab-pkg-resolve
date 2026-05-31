@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from zab_pkg_resolve.builtins.sources.local_env import LocalEnvironmentProvider
 from zab_pkg_resolve.builtins.sources.static import StaticSourceProvider
 from zab_pkg_resolve.interfaces.sources import SourceConfig, SourceFactory, SourceProvider
 
@@ -7,7 +8,7 @@ from zab_pkg_resolve.interfaces.sources import SourceConfig, SourceFactory, Sour
 class ResolverRegistry:
     def __init__(self) -> None:
         self.providers: dict[str, SourceProvider] = {}
-        self.source_types: dict[str, SourceFactory] = {}
+        self.source_types: dict[str, SourceFactory] = {"local-env": LocalEnvironmentProvider}
         self.last_provider: str | None = None
 
     def register(self, provider: SourceProvider) -> None:

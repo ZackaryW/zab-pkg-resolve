@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from zab_pkg_resolve.indexes import IndexManager
+from zab_pkg_resolve.builtins.sources.local_env import LocalEnvironmentProvider
 from zab_pkg_resolve.interfaces.sources import SourceConfig, SourceFactory
 from zab_pkg_resolve.locks import write_lock_records
 from zab_pkg_resolve.providers import ResolverRegistry, SourceProvider, StaticSourceProvider
@@ -12,6 +13,7 @@ from zab_pkg_resolve.validation import PythonVersionPolicy, RequiredFieldPolicy,
 
 __all__ = [
     "IndexManager",
+    "LocalEnvironmentProvider",
     "ManagedStore",
     "PythonVersionPolicy",
     "RequiredFieldPolicy",

@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+from zab_pkg_resolve.builtins.sources.local_env import LocalEnvironmentProvider
 from zab_pkg_resolve.models import CanonicalTarget, Loadpoint, ResolvedPackage
 from zab_pkg_resolve.resolver import (
     ManagedStore,
@@ -157,6 +158,82 @@ class SourceRegistryTests(unittest.TestCase):
         self.assertEqual(registry.last_provider, "internal")
         self.assertEqual(source.location, "memory://internal")
         self.assertEqual(package.provider, "internal")
+
+
+class FakeDistribution:
+    def __init__(self, name: str, version: str = "1.0.0", top_level: str | None = None) -> None:
+        self.metadata = {"Name": name}
+        self.version = version
+        self._top_level = top_level
+
+    def read_text(self, filename: str) -> str | None:
+        if filename == "top_level.txt":
+            return self._top_level
+        return None
+
+
+class LocalEnvironmentProviderTests(unittest.TestCase):
+    def test_scan_matches_distribution_name_and_returns_module_loadpoint(self) -> None:
+        provider = LocalEnvironmentProvider(
+            "local",
+            location=r"^zush[-_].+",
+            distributions=lambda: [FakeDistribution("zush-demo", "1.2.3", "zush_demo\n")],
+            module_finder=lambda module: object() if module == "zush_demo.__zush__" else None,
+        )
+
+        packages = provider.scan()
+
+        self.assertEqual(packages[0].id, "zush-demo")
+        self.assertEqual(packages[0].provider, "local")
+        self.assertEqual(packages[0].revision, "1.2.3")
+        self.assertEqual(packages[0].loadpoint, Loadpoint.module("zush_demo.__zush__"))
+
+    def test_scan_ignores_non_matching_distribution(self) -> None:
+        provider = LocalEnvironmentProvider(
+            "local",
+            location=r"^zush[-_].+",
+            distributions=lambda: [FakeDistribution("other-demo", top_level="other_demo\n")],
+            module_finder=lambda module: object(),
+        )
+
+        self.assertEqual(provider.scan(), [])
+
+    def test_scan_uses_normalized_distribution_name_when_top_level_is_missing(self) -> None:
+        provider = LocalEnvironmentProvider(
+            "local",
+            location=r"^zush[-_].+",
+            distributions=lambda: [FakeDistribution("zush-demo")],
+            module_finder=lambda module: object() if module == "zush_demo.__zush__" else None,
+        )
+
+        packages = provider.scan()
+
+        self.assertEqual(packages[0].loadpoint, Loadpoint.module("zush_demo.__zush__"))
+
+    def test_scan_skips_distribution_without_importable_zush_module(self) -> None:
+        provider = LocalEnvironmentProvider(
+            "local",
+            location=r"^zush[-_].+",
+            distributions=lambda: [FakeDistribution("zush-demo", top_level="zush_demo\n")],
+            module_finder=lambda module: None,
+        )
+
+        self.assertEqual(provider.scan(), [])
+
+    def test_resolve_returns_matching_local_package(self) -> None:
+        provider = LocalEnvironmentProvider(
+            "local",
+            location=r"^zush[-_].+",
+            distributions=lambda: [FakeDistribution("zush-tool", top_level="zush_tool\n")],
+            module_finder=lambda module: object() if module == "zush_tool.__zush__" else None,
+        )
+
+        package = provider.resolve("local:zush-tool")
+
+        self.assertTrue(provider.can_resolve("local:zush-tool"))
+        self.assertEqual(package.id, "zush-tool")
+        self.assertEqual(package.target.kind, "local-env")
+        self.assertEqual(package.loadpoint, Loadpoint.module("zush_tool.__zush__"))
 
 
 if __name__ == "__main__":

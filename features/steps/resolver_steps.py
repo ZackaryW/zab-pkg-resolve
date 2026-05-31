@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from behave import given, then, when
 
+from zab_pkg_resolve.builtins.sources.local_env import LocalEnvironmentProvider
 from zab_pkg_resolve.models import CanonicalTarget, Loadpoint, ResolvedPackage
 from zab_pkg_resolve.resolver import (
 	PythonVersionPolicy,
@@ -28,6 +29,53 @@ def _consumer_record(context, package_id: str):
 		if record.id == package_id:
 			return record
 	raise AssertionError(f"No consumer record for {package_id}")
+
+
+class FakeDistribution:
+	def __init__(self, name: str, version: str) -> None:
+		self.metadata = {"Name": name}
+		self.version = version
+		self._top_level: str | None = None
+
+	def read_text(self, filename: str) -> str | None:
+		if filename == "top_level.txt":
+			return self._top_level
+		return None
+
+
+def _local_distributions(context) -> list[FakeDistribution]:
+	if not hasattr(context, "local_distributions"):
+		context.local_distributions = []
+	return context.local_distributions
+
+
+def _local_distribution(context, name: str) -> FakeDistribution:
+	for distribution in _local_distributions(context):
+		if distribution.metadata["Name"] == name:
+			return distribution
+	raise AssertionError(f"No local distribution {name}")
+
+
+def _importable_modules(context) -> set[str]:
+	if not hasattr(context, "importable_modules"):
+		context.importable_modules = set()
+	return context.importable_modules
+
+
+def _local_package(context, package_id: str):
+	for package in context.local_results:
+		if package.id == package_id:
+			return package
+	raise AssertionError(f"No local package {package_id}")
+
+
+def _local_provider(context, name: str = "local", pattern: str = r"^zush[-_].+") -> LocalEnvironmentProvider:
+	return LocalEnvironmentProvider(
+		name,
+		location=pattern,
+		distributions=lambda: list(_local_distributions(context)),
+		module_finder=lambda module: object() if module in _importable_modules(context) else None,
+	)
 
 
 @given('a user-level index source named "{name}" at "{location}"')
@@ -511,6 +559,56 @@ def assert_resolved_provider(context, name: str):
 @then('source "{name}" should remember location "{location}"')
 def assert_source_location(context, name: str, location: str):
 	assert _workspace(context).providers.providers[name].location == location
+
+
+@given('the local environment contains distribution "{name}" version "{version}"')
+def given_local_distribution(context, name: str, version: str):
+	_local_distributions(context).append(FakeDistribution(name, version))
+
+
+@given('distribution "{name}" exposes top-level module "{module}"')
+def local_distribution_exposes_top_level_module(context, name: str, module: str):
+	_local_distribution(context, name)._top_level = f"{module}\n"
+
+
+@given('module "{module}" is importable')
+def module_is_importable(context, module: str):
+	_importable_modules(context).add(module)
+
+
+@given('a local environment source named "{name}" uses pattern "{pattern}"')
+def local_environment_source_uses_pattern(context, name: str, pattern: str):
+	_workspace(context).providers.register(_local_provider(context, name=name, pattern=pattern))
+
+
+@when('the local environment provider scans with pattern "{pattern}"')
+def local_environment_provider_scans(context, pattern: str):
+	context.local_results = _local_provider(context, pattern=pattern).scan()
+
+
+@then('local package results should include package "{package_id}"')
+def local_results_should_include_package(context, package_id: str):
+	assert any(package.id == package_id for package in context.local_results)
+
+
+@then('local package results should not include package "{package_id}"')
+def local_results_should_not_include_package(context, package_id: str):
+	assert all(package.id != package_id for package in context.local_results)
+
+
+@then('local package "{package_id}" should include module loadpoint "{module}"')
+def local_package_should_include_module_loadpoint(context, package_id: str, module: str):
+	assert _local_package(context, package_id).loadpoint == Loadpoint.module(module)
+
+
+@then('local package "{package_id}" should record provider "{provider}"')
+def local_package_should_record_provider(context, package_id: str, provider: str):
+	assert _local_package(context, package_id).provider == provider
+
+
+@then('the resolved package should include local module loadpoint "{module}"')
+def resolved_package_should_include_local_module_loadpoint(context, module: str):
+	assert _workspace(context).resolved_package.loadpoint == Loadpoint.module(module)
 
 
 @given('a resolved package "{package_id}" with a manifest missing field "{field}"')
