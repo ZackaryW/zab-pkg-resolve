@@ -111,3 +111,4 @@ class ValidationResult:
 class InstallResult:
     record: InstalledPackageRecord
     used_cache: bool
+    changed: bool = True

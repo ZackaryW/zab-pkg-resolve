@@ -25,8 +25,10 @@ class ManagedStore:
     def install(self, package: ResolvedPackage) -> InstallResult:
         used_cache = package.artifact_hash in self.cache_entries
         self.add_cache_entry(package.artifact_hash)
+        previous = self.active_record(package.id)
+        changed = self._record_changed(previous, package)
         record = self._write_install_record(package)
-        self.last_install_result = InstallResult(record=record, used_cache=used_cache)
+        self.last_install_result = InstallResult(record=record, used_cache=used_cache, changed=changed)
         return self.last_install_result
 
     def uninstall(self, package_id: str) -> None:
@@ -94,6 +96,18 @@ class ManagedStore:
                 "revision": package.revision,
                 "target": package.target.descriptor(),
             },
+        )
+
+    def _record_changed(self, record: InstalledPackageRecord | None, package: ResolvedPackage) -> bool:
+        if record is None:
+            return True
+        return any(
+            [
+                record.artifact_hash != package.artifact_hash,
+                record.loadpoint != package.loadpoint,
+                record.entrypoint != package.entrypoint,
+                record.capabilities != package.capabilities,
+            ]
         )
 
     def _consumer_record(self, record: InstalledPackageRecord) -> ConsumerPackageRecord:

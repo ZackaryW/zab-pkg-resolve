@@ -82,6 +82,22 @@ class ManagedStoreTests(unittest.TestCase):
             self.assertEqual(consumer_record.loadpoint, Loadpoint.path("C:/repo/zush_local", callable="extension"))
             self.assertEqual(consumer_record.as_dict()["loadpoint"]["kind"], "path")
 
+    def test_reinstalling_same_artifact_reports_unchanged(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            store = ManagedStore(Path(temp_dir))
+            package = ResolvedPackage(
+                id="zush.cron",
+                target=CanonicalTarget("package", "zush.cron"),
+                artifact_hash="abc123",
+                loadpoint=Loadpoint.module("zush_cron.__zush__"),
+            )
+
+            first = store.install(package)
+            second = store.install(package)
+
+            self.assertTrue(first.changed)
+            self.assertFalse(second.changed)
+
     def test_uninstall_preserves_record_but_removes_active_projection(self) -> None:
         with TemporaryDirectory() as temp_dir:
             store = ManagedStore(Path(temp_dir))

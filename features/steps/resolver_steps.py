@@ -127,9 +127,16 @@ def set_resolved_entrypoint(context, entrypoint: str):
 	_workspace(context).resolved_package.manifest["entrypoint"] = entrypoint
 
 
+@given("I install the resolved package")
 @when("I install the resolved package")
 def install_resolved_package(context):
 	_workspace(context).store.install(_workspace(context).resolved_package)
+
+
+@given('the resolved package artifact hash becomes "{artifact_hash}"')
+def resolved_package_artifact_hash_becomes(context, artifact_hash: str):
+	_workspace(context).resolved_package.artifact_hash = artifact_hash
+	_workspace(context).resolved_package.revision = artifact_hash[:12]
 
 
 @then("the package should be installed under the managed install store")
@@ -158,6 +165,16 @@ def assert_record_entrypoint(context, entrypoint: str):
 @then("the package record should be marked active")
 def assert_record_active(context):
 	assert _workspace(context).store.last_install_result.record.active
+
+
+@then("the install result should report no package change")
+def assert_install_result_unchanged(context):
+	assert not _workspace(context).store.last_install_result.changed
+
+
+@then("the install result should report a package change")
+def assert_install_result_changed(context):
+	assert _workspace(context).store.last_install_result.changed
 
 
 @given('package "{package_id}" is installed and active')

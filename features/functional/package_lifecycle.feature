@@ -27,3 +27,16 @@ Feature: Package install and uninstall lifecycle
     Then the installer should use the cached artifact
     And the central userspace record should point to the new active install
     And no duplicate artifact cache entry should be created
+
+  Scenario: Reinstalling an unchanged resolved package reports no surface change
+    Given a resolved package "zush.cron" with artifact hash "abc123"
+    And I install the resolved package
+    When I install the resolved package
+    Then the install result should report no package change
+
+  Scenario: Updating a resolved package with a new artifact reports a surface change
+    Given a resolved package "zush.cron" with artifact hash "abc123"
+    And I install the resolved package
+    And the resolved package artifact hash becomes "def456"
+    When I install the resolved package
+    Then the install result should report a package change
